@@ -1,0 +1,111 @@
+Coordinate data validation
+==========================
+
+Report generated: `r format(Sys.time(), tz="UTC", usetz=TRUE)`
+
+### Introduction
+
+This reports documents possible errors in the file: `RaCA - Dec Deg plot & pedon locations all KSSL.csv`. The report details the errors and the R code used to find them.
+
+### Define
+First we need to make sure things are in place
+```{r definitions}
+filename <- "RaCA - Dec Deg plot & pedon locations all KSSL"  # The name of the file
+```
+
+### Read in data
+We must first read in the data.
+```{r readin}
+dat <- read.csv(paste0(filename, ".csv"))
+str(dat)
+```
+
+Everything here seems orderly except for the fact that there is an additional column, `X`. This column is an empty column except for a few entries.
+
+### Column X
+
+Column X is mostly empty, but we can find where it is not empty and what is at that point:
+
+```{r nona}
+X_elements <- !is.na(dat$X)
+dat[X_elements,]
+```
+
+We see here that X looks like it is made up of `r sum(X_elements)` longitudes which have been shifted one column to the right. For us, this seemed the most plausible explanation. The rest of this analysis will assume this and also assume that the cause of the problem is an erroneous `Distance_from_center` column.
+
+So we'll no remove these incorrect Distance_from_center measurements:
+
+```{r repdist}
+dat[X_elements,c("Distance_from_center","Center_lat_dd", "Center_lon_dd")] <- dat[X_elements,c("Center_lat_dd", "Center_lon_dd", "X")]
+dat$X <- NULL
+
+dat[X_elements,]
+```
+
+### Finding duplicate IDs
+
+Duplicate IDs are a little bit difficult to follow, but I'm going to make an assumption here that all the data are in order. So I'm looking for IDs that appear in more than one place in this data. The `IRanges` package is used here, which can be found [here](http://www.bioconductor.org/packages/2.11/bioc/html/IRanges.html).
+
+```{r id-duplicates, message=FALSE}
+library(IRanges)
+id_runs <- Rle(dat$RaCA_Id)
+id_starts <- start(id_runs)
+id_dups<- which(duplicated(dat$RaCA_Id[id_starts]))
+id_dups
+```
+
+There are `r length(id_dups)` elements which are involved in duplication.
+
+### Finding strangely formatted IDs
+
+As far as I can see, the general format for the IDs is an uppercase letter followed by 4 digits, followed by another uppercase letter followed by 2 more digits. I decided to check if all IDs followed this pattern using regular expressions:
+
+```{r regex-ids}
+nopatmatch <- grep("[[:upper:]][[:digit:]]{4}[[:upper:]][[:digit:]]{2}", dat$RaCA_Id, invert=TRUE)
+strangeids <- dat[nopatmatch,]
+strangeids
+```
+
+There are `r nrow(dat[nopatmatch,])` elements which do not meet the expected pattern.
+
+### Finding duplicated coordinates
+
+All measurements should be taken in different places, so it stands to reason that that these should be unique
+
+```{r duplicate-coords}
+unique_ids <- dat[id_starts,]
+
+coord_dups <- unique_ids[duplicated(unique_ids[ , c("Center_lat_dd", "Center_lon_dd")]), ]
+all_coord_dups <- unique_ids[unique_ids$Center_lon_dd %in% coord_dups$Center_lon_dd & unique_ids$Center_lat_dd %in% coord_dups$Center_lat_dd, ]
+all_coord_dups[with(all_coord_dups, order(Center_lat_dd, Center_lon_dd)),]
+```
+
+There are `r nrow(all_coord_dups)` elements which are involved in having duplicate coordinates
+
+### Unconventional `UpedonID`s
+
+It seems that the convention for `UpedonID` is `[RaCA_Id]-[Point_no]`. We can find elements which do not match this scheme. There are quite a number of these, so we'll just show a few of them (50) and produce a text file containing them:
+
+```{r upedonid}
+set.seed(20120218)
+
+unconventional_upedonids<- dat[dat$UpedonID != with(dat,paste0(RaCA_Id, "-", Point_no)),]
+random_rows <- sample(nrow(unconventional_upedonids), 50)
+unconventional_upedonids[random_rows, c("RaCA_Id", "UpedonID", "Point_no")]
+
+write.table(unconventional_upedonids, file="unconventional_upedonids.txt", sep="\t")
+```
+
+There are quite a number of these, `r nrow(unconventional_upedonids)`.
+
+### Writing all these to a file
+
+All of the offending entries will now be logged:
+
+```{r onering}
+all_offend <- rbind(dat[X_elements,], dat[id_dups,], strangeids)
+all_offend <- all_offend[duplicated(all_offend),]
+all_offend <- all_offend[order(as.numeric(row.names(all_offend))),]
+
+write.table(all_offend, paste0(filename, " - irregularities.txt"), sep="\t", row.names=FALSE)
+```
