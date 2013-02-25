@@ -10,7 +10,8 @@ This reports documents possible errors in the file: `RaCA - Dec Deg plot & pedon
 ### Define
 First we need to make sure things are in place
 ```{r definitions}
-filename <- "RaCA - Dec Deg plot & pedon locations all KSSL"  # The name of the file
+## The name of the file with no file extension
+filename <- "RaCA - Dec Deg plot & pedon locations all KSSL"  
 ```
 
 ### Read in data
@@ -82,13 +83,27 @@ all_coord_dups[with(all_coord_dups, order(Center_lat_dd, Center_lon_dd)),]
 
 There are `r nrow(all_coord_dups)` elements which are involved in having duplicate coordinates
 
+### Finding NAs in other fields
+
+Some fields such as `Azimuth_from_center` and `Distance_from_center` contain NAs. We can isolate those lines. There are a number of these, so we will only show a random 20:
+
+```{r NAs}
+set.seed(20120218)
+
+NA_lines <- !complete.cases(dat)
+NA_data <- dat[NA_lines,]
+NA_data[sample(sum(NA_lines), 20),]
+
+write.table(NA_data, file="NA_data.txt", sep="\t")
+
+```
+
+
 ### Unconventional `UpedonID`s
 
 It seems that the convention for `UpedonID` is `[RaCA_Id]-[Point_no]`. We can find elements which do not match this scheme. There are quite a number of these, so we'll just show a few of them (50) and produce a text file containing them:
 
 ```{r upedonid}
-set.seed(20120218)
-
 unconventional_upedonids<- dat[dat$UpedonID != with(dat,paste0(RaCA_Id, "-", Point_no)),]
 random_rows <- sample(nrow(unconventional_upedonids), 50)
 unconventional_upedonids[random_rows, c("RaCA_Id", "UpedonID", "Point_no")]
@@ -103,7 +118,7 @@ There are quite a number of these, `r nrow(unconventional_upedonids)`.
 All of the offending entries will now be logged:
 
 ```{r onering}
-all_offend <- rbind(dat[X_elements,], dat[id_dups,], strangeids)
+all_offend <- rbind(dat[X_elements,], dat[NA_lines,], dat[id_dups,], strangeids)
 all_offend <- all_offend[duplicated(all_offend),]
 all_offend <- all_offend[order(as.numeric(row.names(all_offend))),]
 
