@@ -4,10 +4,11 @@ FILENAME <- ""
 
 setwd(FILENAME)
 
-knit(paste0(FILENAME, ".Rmd"))
+knit(paste0(FILENAME, ".Rmd"), output=paste0(FILENAME, ".md"))
 
 ##HTML
-knit2html(paste0(FILENAME, ".md"))
+library(markdown)
+markdownToHTML(file=paste0(FILENAME, ".md"), output=paste0(FILENAME, ".html"))
 
 ##PDF
 # You must have pandoc installed: http://johnmacfarlane.net/pandoc/

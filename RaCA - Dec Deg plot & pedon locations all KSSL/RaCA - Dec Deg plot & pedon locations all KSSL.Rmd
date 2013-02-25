@@ -118,9 +118,26 @@ There are quite a number of these, `r nrow(unconventional_upedonids)`.
 All of the offending entries will now be logged:
 
 ```{r onering}
-all_offend <- rbind(dat[X_elements,], dat[NA_lines,], dat[id_dups,], strangeids)
+all_offend <- rbind(dat[X_elements,], dat[NA_lines,], dat[id_dups,], unconventional_upedonids, strangeids)
 all_offend <- unique(all_offend)
 all_offend <- all_offend[order(as.numeric(row.names(all_offend))),]
 
 write.table(all_offend, paste0(filename, " - irregularities.txt"), sep="\t")
+```
+
+### Summary tables
+
+Below is a summary of the various issues and the number of rows affected by each one:
+
+
+```{r summarytable, echo=FALSE, results='asis'}
+#library(xtable)
+summary_table <- data.frame(Fault=c("Additional X column", "Lines with NA", "Duplicated IDs (including original)", "Misformatted upedonids", "Misformatted RaCA IDs"), Count=c(nrow(dat[X_elements,]), nrow(dat[NA_lines,]), nrow(dat[id_dups,]), nrow(unconventional_upedonids), nrow(strangeids)))
+
+cat("Fault|Count", ":-----|-----:", sep="\n")
+cat(apply(summary_table, 1, function(X) paste(X, collapse="|")), sep = "\n")
+#print(xtable(summary_table), type="html", include.rownames=FALSE)
+
+# library(hwriter)
+# cat(hwrite(summary_table))
 ```
