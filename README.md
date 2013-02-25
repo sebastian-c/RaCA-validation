@@ -9,4 +9,11 @@ Scripts for validating datafiles from RaCA
 
 ## Running a validation script
 
-Every folder has a name based on the file it is validating. In the base directory, there is a file called `knitscript.R`. This script has a spot (FILENAME) to place the file you are interested in (with no file extension). Running the script will allow you to run the script and convert the Markdown output to HTML and PDF. You may only convert to PDF if you have a LaTeX distribution and Pandoc installed.
+Every folder has a name based on the file it is validating.   
+In the base directory, there is a file called `knitscript.R`. 
+
+* Download the zip file and unzip it to a directory of your choice.
+* Open the project via the .RProj file.
+* Change the assignment in `knitscript.R` to the your filename with no file extension. If your file is called `myfile.csv`, change the line to `FILENAME <- "myfile"`.
+* If you do not wish for either HTML or PDF output, comment out the lines underneath the headings which do that by placing a `#` in front of them.
+* Run the script. It should produce the output you desire.
