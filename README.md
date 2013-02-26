@@ -6,6 +6,7 @@ Scripts for validating datafiles from RaCA
 ## Requirements
 * `knitr` - this can be obtained by running `install.packages('knitr')` in R.
 * For PDFs: [MikTeX](http://miktex.org) and [Pandoc](http://johnmacfarlane.net/pandoc/). If you are using Linux, there's a LaTeX distribution called [TeXLive](http://www.tug.org/texlive/) which you should use instead of MikTeX.
+* For docx: Pandoc as detailed above. You will not need a LaTeX distribution.
 
 ## Running a validation script
 
