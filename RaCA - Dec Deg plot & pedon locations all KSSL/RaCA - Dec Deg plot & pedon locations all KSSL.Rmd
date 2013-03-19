@@ -34,7 +34,7 @@ dat[X_elements,]
 
 We see here that X looks like it is made up of `r sum(X_elements)` longitudes which have been shifted one column to the right. For us, this seemed the most plausible explanation. The rest of this analysis will assume this and also assume that the cause of the problem is an erroneous `Distance_from_center` column.
 
-So we'll no remove these incorrect Distance_from_center measurements:
+So we'll now remove these incorrect Distance_from_center measurements:
 
 ```{r repdist}
 dat[X_elements,c("Distance_from_center","Center_lat_dd", "Center_lon_dd")] <- dat[X_elements,c("Center_lat_dd", "Center_lon_dd", "X")]
@@ -131,13 +131,9 @@ Below is a summary of the various issues and the number of rows affected by each
 
 
 ```{r summarytable, echo=FALSE, results='asis'}
-#library(xtable)
+library(pander)
 summary_table <- data.frame(Fault=c("Additional X column", "Lines with NA", "Duplicated IDs (including original)", "Misformatted upedonids", "Misformatted RaCA IDs"), Count=c(nrow(dat[X_elements,]), nrow(dat[NA_lines,]), nrow(dat[id_dups,]), nrow(unconventional_upedonids), nrow(strangeids)))
 
-cat("Fault|Count", ":-----|-----:", sep="\n")
-cat(apply(summary_table, 1, function(X) paste(X, collapse="|")), sep = "\n")
-#print(xtable(summary_table), type="html", include.rownames=FALSE)
+pander(summary_table)
 
-# library(hwriter)
-# cat(hwrite(summary_table))
 ```
